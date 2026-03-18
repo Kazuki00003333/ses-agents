@@ -1,0 +1,193 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  sales
+  manager
+  admin
+}
+
+enum UserStatus {
+  active
+  inactive
+}
+
+model User {
+  id        String     @id @default(uuid())
+  name      String
+  email     String     @unique
+  password  String
+  role      UserRole   @default(sales)
+  teamName  String?    @map("team_name")
+  status    UserStatus @default(active)
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  projects          Project[]
+  candidates        Candidate[]
+  evaluations       Evaluation[]
+  evaluationResults EvaluationResult[]
+  auditLogs         AuditLog[]
+
+  @@map("users")
+}
+
+model Project {
+  id                  String   @id @default(uuid())
+  salesUserId         String   @map("sales_user_id")
+  projectName         String   @map("project_name")
+  clientCompanyName   String?  @map("client_company_name")
+  projectSummary      String?  @map("project_summary")
+  mustSkills          String?  @map("must_skills")
+  niceToHaveSkills    String?  @map("nice_to_have_skills")
+  commercialFlow      Int?     @map("commercial_flow")
+  participationPeriod String?  @map("participation_period")
+  unitPrice           String?  @map("unit_price")
+  paymentSite         String?  @map("payment_site")
+  workingHours        String?  @map("working_hours")
+  workLocation        String?  @map("work_location")
+  remoteType          String?  @map("remote_type")
+  interviewCount      String?  @map("interview_count")
+  settlementRange     String?  @map("settlement_range")
+  foreignerAllowed    String?  @map("foreigner_allowed")
+  ageLimit            String?  @map("age_limit")
+  otherInfo           String?  @map("other_info")
+  structuredInputJson Json?    @map("structured_input_json")
+  aiSummary           String?  @map("ai_summary")
+  aiMissingInfo       Json?    @map("ai_missing_info")
+  aiChecklist         Json?    @map("ai_checklist")
+  aiInsights          Json?    @map("ai_insights")
+  riskFlags           Json?    @map("risk_flags")
+  status              String   @default("draft")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  salesUser   User         @relation(fields: [salesUserId], references: [id])
+  evaluations Evaluation[]
+
+  @@index([salesUserId])
+  @@index([createdAt])
+  @@map("projects")
+}
+
+model Candidate {
+  id                 String   @id @default(uuid())
+  salesUserId        String   @map("sales_user_id")
+  candidateCode        String?  @map("candidate_code")
+  candidateName        String?  @map("candidate_name")
+  companyName          String?  @map("company_name")
+  commercialFlowType   String?  @map("commercial_flow_type")
+  commercialFlowDepth  Int?     @map("commercial_flow_depth")
+  age                  Int?
+  nearestStation       String?  @map("nearest_station")
+  availableDate      String?  @map("available_date")
+  experienceYears    String?  @map("experience_years")
+  mainSkills         String?  @map("main_skills")
+  industryExperience String?  @map("industry_experience")
+  phaseExperience    String?  @map("phase_experience")
+  strengths          String?
+  desiredConditions  String?  @map("desired_conditions")
+  ngConditions       String?  @map("ng_conditions")
+  summary            String?
+  skillSheetText     String?  @map("skill_sheet_text")
+  normalizedSkills   Json?    @map("normalized_skills")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  salesUser   User         @relation(fields: [salesUserId], references: [id])
+  evaluations Evaluation[]
+
+  @@index([salesUserId])
+  @@index([updatedAt])
+  @@map("candidates")
+}
+
+model Evaluation {
+  id                 String   @id @default(uuid())
+  projectId          String   @map("project_id")
+  candidateId        String   @map("candidate_id")
+  salesUserId        String   @map("sales_user_id")
+  mustMatchScore     Int?     @map("must_match_score")
+  niceToHaveScore    Int?     @map("nice_to_have_score")
+  jobFitScore        Int?     @map("job_fit_score")
+  conditionScore     Int?     @map("condition_score")
+  startTimingScore   Int?     @map("start_timing_score")
+  summaryScore       Int?     @map("summary_score")
+  totalScore         Int?     @map("total_score")
+  fitnessRate        Int?     @map("fitness_rate")
+  scoreBreakdownJson Json?    @map("score_breakdown_json")
+  aiComment          String?  @map("ai_comment")
+  concernPoints      Json?    @map("concern_points")
+  proposalPoints     Json?    @map("proposal_points")
+  evaluationVersion  String?  @map("evaluation_version")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  project   Project   @relation(fields: [projectId], references: [id])
+  candidate Candidate @relation(fields: [candidateId], references: [id])
+  salesUser User      @relation(fields: [salesUserId], references: [id])
+
+  result EvaluationResult?
+
+  @@index([salesUserId])
+  @@index([projectId])
+  @@index([candidateId])
+  @@map("evaluations")
+}
+
+model EvaluationResult {
+  id                  String   @id @default(uuid())
+  evaluationId        String   @unique @map("evaluation_id")
+  salesUserId         String   @map("sales_user_id")
+  proposedFlag        Boolean  @default(false) @map("proposed_flag")
+  documentPassedFlag  Boolean  @default(false) @map("document_passed_flag")
+  interviewPassedFlag Boolean  @default(false) @map("interview_passed_flag")
+  closedFlag          Boolean  @default(false) @map("closed_flag")
+  rejectionReason     String?  @map("rejection_reason")
+  salesComment        String?  @map("sales_comment")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  evaluation Evaluation @relation(fields: [evaluationId], references: [id])
+  salesUser  User       @relation(fields: [salesUserId], references: [id])
+
+  @@index([salesUserId])
+  @@index([createdAt])
+  @@map("evaluation_results")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  actionType String   @map("action_type")
+  targetType String   @map("target_type")
+  targetId   String   @map("target_id")
+  payload    Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}
+
+model AiLog {
+  id           String   @id @default(uuid())
+  feature      String
+  model        String
+  systemPrompt String   @map("system_prompt")
+  userInput    String   @map("user_input")
+  rawOutput    String   @map("raw_output")
+  parsedOutput Json?    @map("parsed_output")
+  latencyMs    Int?     @map("latency_ms")
+  success      Boolean  @default(true)
+  errorMessage String?  @map("error_message")
+  relatedId    String?  @map("related_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("ai_logs")
+}
