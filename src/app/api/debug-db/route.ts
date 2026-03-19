@@ -1,28 +1,38 @@
 import { NextResponse } from "next/server";
 import { Pool } from "pg";
 
-export async function GET() {
-  const url = process.env.DATABASE_URL;
-  if (!url) return NextResponse.json({ error: "DATABASE_URL not set" }, { status: 500 });
+const REF = "kudtuedflcehxlrblmlw";
+const PASS = process.env.DB_PASS || "";
+const REGIONS = [
+  "ap-northeast-1",
+  "ap-southeast-1",
+  "us-east-1",
+  "us-west-1",
+  "us-west-2",
+  "eu-west-1",
+  "eu-central-1",
+];
 
-  const pool = new Pool({
-    connectionString: url,
-    ssl: url.includes("supabase.co") ? { rejectUnauthorized: false } : undefined,
-    connectionTimeoutMillis: 5000,
-  });
-
+async function tryConnect(url: string): Promise<{ ok: boolean; error?: string }> {
+  const pool = new Pool({ connectionString: url, ssl: { rejectUnauthorized: false }, connectionTimeoutMillis: 4000 });
   try {
-    const result = await pool.query("SELECT current_user, version()");
+    await pool.query("SELECT 1");
     await pool.end();
-    return NextResponse.json({ ok: true, user: result.rows[0] });
+    return { ok: true };
   } catch (e) {
     await pool.end().catch(() => {});
-    const err = e as { message?: string; code?: string };
-    return NextResponse.json({
-      ok: false,
-      code: err.code,
-      message: err.message,
-      url_host: url.replace(/:([^@]+)@/, ":***@"),
-    }, { status: 500 });
+    return { ok: false, error: (e as Error).message };
   }
+}
+
+export async function GET() {
+  const results: Record<string, unknown> = {};
+
+  for (const region of REGIONS) {
+    const host = `aws-0-${region}.pooler.supabase.com`;
+    const url = `postgresql://postgres.${REF}:${PASS}@${host}:6543/postgres`;
+    results[region] = await tryConnect(url);
+  }
+
+  return NextResponse.json(results);
 }
