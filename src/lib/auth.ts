@@ -20,7 +20,8 @@ export const authOptions: NextAuthOptions = {
             where: { email: credentials.email },
           });
         } catch (e) {
-          console.error("[auth] DB error:", e);
+          const msg = e instanceof Error ? e.message : String(e);
+          console.error("[auth] DB error code=" + (e as {code?:string}).code + " msg=" + msg.slice(0,200));
           return null;
         }
 
