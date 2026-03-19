@@ -78,15 +78,6 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-6 pt-6 border-t border-gray-100">
-          <p className="text-xs text-gray-400 mb-2">デモアカウント:</p>
-          <div className="text-xs text-gray-500 space-y-1">
-            <p>管理者: admin@example.com</p>
-            <p>マネージャー: manager@example.com</p>
-            <p>営業: sales1@example.com / sales2@example.com</p>
-            <p className="text-gray-400">パスワード: password123</p>
-          </div>
-        </div>
       </div>
     </div>
   );
