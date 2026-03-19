@@ -8,14 +8,17 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPool() {
-  const isSupabase = process.env.DATABASE_URL?.includes("supabase.co");
+  const url = process.env.DATABASE_URL!;
+  const needsSsl = url.includes("supabase.co") || url.includes("neon.tech");
+  // neon.tech の channel_binding=require は pg ライブラリ非対応のため除去
+  const connectionString = url.replace(/[&?]channel_binding=[^&]*/g, "");
   const pool = new Pool({
-    connectionString: process.env.DATABASE_URL!,
+    connectionString,
     min: 0,                    // dev環境ではデーモン再起動時に古い接続が残らないよう0に
     max: 5,
     idleTimeoutMillis: 10000,  // 10秒でアイドル接続を解放（デーモン再起動後の死接続を早期解消）
     connectionTimeoutMillis: 30000,
-    ssl: isSupabase ? { rejectUnauthorized: false } : undefined,
+    ssl: needsSsl ? { rejectUnauthorized: false } : undefined,
   });
   // デーモン再起動などで接続が切れたらプールごと破棄して次回リクエストで再作成する
   pool.on("error", () => {
