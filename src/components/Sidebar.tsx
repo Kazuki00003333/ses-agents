@@ -22,7 +22,7 @@ export function Sidebar() {
         <p className="text-sm text-gray-400 mt-0.5">営業支援システム</p>
       </div>
 
-      <nav className="flex-1 px-3 py-5 space-y-1">
+      <nav className="flex-1 px-3 py-5 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
           return (
@@ -40,6 +40,24 @@ export function Sidebar() {
             </Link>
           );
         })}
+        {(session?.user?.role === "admin" || session?.user?.role === "manager") && (
+          <>
+            <div className="pt-3 pb-1 px-4">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">管理者</p>
+            </div>
+            <Link
+              href="/admin/proposals"
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-colors ${
+                pathname === "/admin/proposals" || pathname.startsWith("/admin/proposals/")
+                  ? "bg-blue-50 text-blue-700"
+                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+              }`}
+            >
+              <span className="text-lg">✅</span>
+              提案レビュー
+            </Link>
+          </>
+        )}
       </nav>
 
       <div className="px-4 py-5 border-t border-gray-100">

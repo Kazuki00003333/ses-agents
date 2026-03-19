@@ -150,6 +150,9 @@ model EvaluationResult {
   closedFlag          Boolean  @default(false) @map("closed_flag")
   rejectionReason     String?  @map("rejection_reason")
   salesComment        String?  @map("sales_comment")
+  adminScoreRating    String?  @map("admin_score_rating")
+  adminComment        String?  @map("admin_comment")
+  adminReviewedAt     DateTime? @map("admin_reviewed_at")
   createdAt           DateTime @default(now()) @map("created_at")
   updatedAt           DateTime @updatedAt @map("updated_at")
 
