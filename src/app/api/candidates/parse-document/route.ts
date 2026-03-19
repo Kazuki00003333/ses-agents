@@ -137,8 +137,8 @@ async function parseFile(buffer: Buffer, ext: string): Promise<ParseResult> {
     }
   }
 
-  // 8000文字でトランケート
-  const MAX_CHARS = 8000;
+  // 20000文字でトランケート（Gemini 2.5 Flashは1Mトークン対応のため余裕あり）
+  const MAX_CHARS = 20000;
   const truncated = cleaned.length > MAX_CHARS;
   const text = truncated ? cleaned.slice(0, MAX_CHARS) + "\n\n[以降省略]" : cleaned;
 
@@ -186,24 +186,57 @@ async function parseExcel(buffer: Buffer, _warnings: string[]): Promise<string> 
   const XLSX = await import("xlsx");
   const workbook = XLSX.read(buffer, { type: "buffer" });
 
-  const lines: string[] = [];
+  const sections: string[] = [];
+
   for (const sheetName of workbook.SheetNames) {
     const sheet = workbook.Sheets[sheetName];
-    const csv = XLSX.utils.sheet_to_csv(sheet);
-    const cleaned = csv
-      .split("\n")
-      .filter((line) => line.replace(/,/g, "").trim().length > 0)
-      .join("\n");
-    if (cleaned.trim()) {
-      lines.push(`[${sheetName}]\n${cleaned}`);
+
+    // sheet_to_json でヘッダー付きの行データとして取得（表構造を保持）
+    const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
+      defval: "",
+      raw: false,
+    });
+
+    if (rows.length === 0) continue;
+
+    // ヘッダー行（キー）を取得
+    const headers = Object.keys(rows[0]);
+    const hasHeaders = headers.some((h) => !/^__EMPTY/.test(h));
+
+    let sheetText: string;
+
+    if (hasHeaders && rows.length <= 50) {
+      // ヘッダーがある表形式（スキル一覧・職務経歴など）→ 各行を「ヘッダー: 値」形式に
+      sheetText = rows
+        .map((row) =>
+          headers
+            .map((h) => {
+              const val = String(row[h] ?? "").trim();
+              return val ? `${h}: ${val}` : "";
+            })
+            .filter(Boolean)
+            .join(" / ")
+        )
+        .filter((line) => line.length > 0)
+        .join("\n");
+    } else {
+      // ヘッダーなし or 行数が多い場合はCSVにフォールバック
+      sheetText = XLSX.utils.sheet_to_csv(sheet)
+        .split("\n")
+        .filter((line) => line.replace(/,/g, "").trim().length > 0)
+        .join("\n");
+    }
+
+    if (sheetText.trim()) {
+      sections.push(`=== シート: ${sheetName} ===\n${sheetText}`);
     }
   }
 
-  if (lines.length === 0) return "";
+  if (sections.length === 0) return "";
 
   _warnings.push(
     "Excelファイルを読み込みました。セルの書式・色・チェックボックスは読み取れません。テキスト内容のみが対象です。"
   );
 
-  return lines.join("\n\n");
+  return sections.join("\n\n");
 }
