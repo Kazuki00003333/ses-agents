@@ -17,6 +17,9 @@ interface DashboardData {
   projectCount: number;
   candidateCount: number;
   evaluationCount: number;
+  meetingCount: number;
+  monthlyMeetingCount: number;
+  monthlyMeetingQualityAvg: number | null;
   documentPassRate: number;
   interviewPassRate: number;
   closeRate: number;
@@ -25,6 +28,16 @@ interface DashboardData {
   projectIncompleteFields: { id: string; missing: string[] }[];
   candidateIncompleteFields: { id: string; missing: string[] }[];
   recentProjects: { id: string; projectName: string; status: string; createdAt: string }[];
+  recentMeetings: {
+    id: string;
+    companyName: string | null;
+    contactName: string | null;
+    meetingType: string | null;
+    aiQualityScore: number | null;
+    aiQualityLabel: string | null;
+    meetingDate: string | null;
+    createdAt: string;
+  }[];
   recentEvaluations: {
     id: string;
     fitnessRate: number | null;
@@ -34,7 +47,7 @@ interface DashboardData {
   }[];
   totalStats: StatCounts;
   monthlyStats: StatCounts;
-  salesSummary?: { id: string; name: string; _count: { projects: number; candidates: number; evaluations: number } }[];
+  salesSummary?: { id: string; name: string; _count: { projects: number; candidates: number; evaluations: number; meetings: number } }[];
 }
 
 // パイプラインファネルバー
@@ -234,8 +247,9 @@ export default function DashboardPage() {
       {/* ===== 今月の活動 ===== */}
       <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6">
         <h3 className="text-base font-bold text-gray-900 mb-5">今月の活動</h3>
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-5 gap-4">
           {[
+            { label: "商談数", value: data.monthlyMeetingCount, color: "text-teal-600", bg: "bg-teal-50" },
             { label: "提案", value: m.proposed, color: "text-blue-600", bg: "bg-blue-50" },
             { label: "書類通過", value: m.documentPassed, color: "text-cyan-600", bg: "bg-cyan-50" },
             { label: "面談通過", value: m.interviewPassed, color: "text-emerald-600", bg: "bg-emerald-50" },
@@ -250,16 +264,17 @@ export default function DashboardPage() {
       </div>
 
       {/* ===== 登録数サマリー ===== */}
-      <div className="grid grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-6 gap-4 mb-6">
         <StatCard label="登録案件数" value={data.projectCount} unit="件" />
         <StatCard label="候補者数" value={data.candidateCount} unit="名" />
         <StatCard label="評価件数" value={data.evaluationCount} unit="件" />
+        <StatCard label="累計商談数" value={data.meetingCount} unit="件" />
         <StatCard label="案件 未入力" value={data.incompleteProjectCount} unit="件" warn />
         <StatCard label="候補者 未入力" value={data.incompleteCandidateCount} unit="名" warn />
       </div>
 
-      {/* ===== 最近の案件・評価 ===== */}
-      <div className="grid grid-cols-2 gap-6 mb-6">
+      {/* ===== 最近の案件・商談・評価 ===== */}
+      <div className="grid grid-cols-3 gap-6 mb-6">
         <div className="bg-white border border-gray-200 rounded-xl p-6">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-base font-bold text-gray-900">最近の案件</h3>
@@ -276,6 +291,41 @@ export default function DashboardPage() {
                     className="flex items-center justify-between py-2.5 hover:bg-gray-50 rounded-lg px-2 -mx-2">
                     <span className="text-base text-gray-800 truncate flex-1">{p.projectName}</span>
                     <span className={`text-sm px-2.5 py-0.5 rounded-full ml-3 font-medium ${s.color}`}>{s.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="bg-white border border-gray-200 rounded-xl p-6">
+          <div className="flex items-center justify-between mb-5">
+            <h3 className="text-base font-bold text-gray-900">最近の商談</h3>
+            <Link href="/meetings" className="text-sm text-blue-600 hover:underline font-medium">一覧を見る</Link>
+          </div>
+          {data.recentMeetings.length === 0 ? (
+            <p className="text-base text-gray-400">商談がありません</p>
+          ) : (
+            <div className="space-y-2">
+              {data.recentMeetings.map((m) => {
+                const qualityColors: Record<string, string> = {
+                  excellent: "bg-green-100 text-green-700",
+                  good: "bg-blue-100 text-blue-700",
+                  fair: "bg-yellow-100 text-yellow-700",
+                  poor: "bg-red-100 text-red-600",
+                };
+                return (
+                  <Link key={m.id} href={`/meetings/${m.id}`}
+                    className="flex items-center justify-between py-2.5 hover:bg-gray-50 rounded-lg px-2 -mx-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-base text-gray-800 truncate">{m.companyName ?? "（未設定）"}</p>
+                      <p className="text-sm text-gray-400 truncate">{m.contactName ?? "—"}</p>
+                    </div>
+                    {m.aiQualityScore != null && (
+                      <span className={`text-sm font-semibold px-2.5 py-0.5 rounded ml-3 ${m.aiQualityLabel ? qualityColors[m.aiQualityLabel] ?? "" : ""}`}>
+                        {m.aiQualityScore}点
+                      </span>
+                    )}
                   </Link>
                 );
               })}
@@ -327,6 +377,7 @@ export default function DashboardPage() {
                 <th className="text-right py-3 font-semibold text-gray-500 text-sm" scope="col">案件数</th>
                 <th className="text-right py-3 font-semibold text-gray-500 text-sm" scope="col">候補者数</th>
                 <th className="text-right py-3 font-semibold text-gray-500 text-sm" scope="col">評価件数</th>
+                <th className="text-right py-3 font-semibold text-gray-500 text-sm" scope="col">商談数</th>
               </tr>
             </thead>
             <tbody>
@@ -336,6 +387,7 @@ export default function DashboardPage() {
                   <td className="py-3 text-right text-base text-gray-700">{s._count.projects}</td>
                   <td className="py-3 text-right text-base text-gray-700">{s._count.candidates}</td>
                   <td className="py-3 text-right text-base text-gray-700">{s._count.evaluations}</td>
+                  <td className="py-3 text-right text-base text-gray-700">{s._count.meetings}</td>
                 </tr>
               ))}
             </tbody>

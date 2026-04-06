@@ -12,6 +12,9 @@ export async function POST(req: NextRequest) {
   if (!rawText?.trim()) {
     return NextResponse.json({ error: "テキストを入力してください" }, { status: 400 });
   }
+  if (typeof rawText !== "string" || rawText.length > 50000) {
+    return NextResponse.json({ error: "テキストが長すぎます（上限50,000文字）" }, { status: 400 });
+  }
 
   try {
     const structured = await callLLMJson<Record<string, unknown>>(

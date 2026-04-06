@@ -11,18 +11,18 @@ export async function GET(
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const candidate = await prisma.candidate.findUnique({
+  const meeting = await prisma.meeting.findUnique({
     where: { id },
     include: { salesUser: { select: { id: true, name: true } } },
   });
 
-  if (!candidate) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!meeting) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  if (session.user.role === "sales" && candidate.salesUserId !== session.user.id) {
+  if (session.user.role === "sales" && meeting.salesUserId !== session.user.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  return NextResponse.json(candidate);
+  return NextResponse.json(meeting);
 }
 
 export async function PUT(
@@ -33,29 +33,33 @@ export async function PUT(
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const candidate = await prisma.candidate.findUnique({ where: { id } });
-  if (!candidate) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const meeting = await prisma.meeting.findUnique({ where: { id }, select: { salesUserId: true } });
+  if (!meeting) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  if (session.user.role === "sales" && candidate.salesUserId !== session.user.id) {
+  if (session.user.role === "sales" && meeting.salesUserId !== session.user.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const body = await req.json();
 
-  // マスアサインメント対策: 更新可能フィールドのみを許可
+  // マスアサインメント対策
   const allowedFields = [
-    "candidateCode", "candidateName", "companyName",
-    "commercialFlowType", "commercialFlowDepth",
-    "age", "nearestStation", "availableDate", "experienceYears",
-    "mainSkills", "industryExperience", "phaseExperience",
-    "strengths", "desiredConditions", "ngConditions",
-    "summary", "skillSheetText", "normalizedSkills",
+    "companyName", "contactName", "meetingPurpose", "meetingGains",
+    "infoMemo", "projectPossibility", "requiredSkillSense", "budgetSense",
+    "timingSense", "meetingType", "nextAction", "meetingDate",
+    "minutesRawText", "status",
+    "aiFollowUpAdvice", "aiQualityScore", "aiQualityLabel",
+    "aiQualityComment", "aiStrengths", "aiImprovements",
   ] as const;
   type AllowedKey = typeof allowedFields[number];
   const data = Object.fromEntries(
     allowedFields.filter((k) => k in body).map((k) => [k, body[k as AllowedKey]])
   );
 
-  const updated = await prisma.candidate.update({ where: { id }, data });
+  if (data.meetingDate) {
+    data.meetingDate = new Date(data.meetingDate as string);
+  }
+
+  const updated = await prisma.meeting.update({ where: { id }, data });
   return NextResponse.json(updated);
 }

@@ -8,6 +8,7 @@ const navItems = [
   { href: "/evaluations", label: "評価履歴", icon: "🗒" },
   { href: "/projects", label: "案件管理", icon: "📋" },
   { href: "/candidates", label: "候補者管理", icon: "👥" },
+  { href: "/meetings", label: "商談管理", icon: "🤝" },
   { href: "/dashboard", label: "ダッシュボード", icon: "📊" },
 ];
 

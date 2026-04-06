@@ -17,6 +17,15 @@ enum UserStatus {
   inactive
 }
 
+enum MeetingType {
+  first_contact
+  needs_hearing
+  project_proposal
+  follow_up
+  closing
+  other
+}
+
 model User {
   id        String     @id @default(uuid())
   name      String
@@ -33,6 +42,7 @@ model User {
   evaluations       Evaluation[]
   evaluationResults EvaluationResult[]
   auditLogs         AuditLog[]
+  meetings          Meeting[]
 
   @@map("users")
 }
@@ -162,6 +172,49 @@ model EvaluationResult {
   @@index([salesUserId])
   @@index([createdAt])
   @@map("evaluation_results")
+}
+
+model Meeting {
+  id                  String       @id @default(uuid())
+  salesUserId         String       @map("sales_user_id")
+
+  // 議事録から抽出した基本情報
+  companyName         String?      @map("company_name")
+  contactName         String?      @map("contact_name")
+  meetingPurpose      String?      @map("meeting_purpose")
+  meetingGains        String?      @map("meeting_gains")
+  infoMemo            String?      @map("info_memo")
+
+  // SES特有フィールド
+  projectPossibility  String?      @map("project_possibility")
+  requiredSkillSense  String?      @map("required_skill_sense")
+  budgetSense         String?      @map("budget_sense")
+  timingSense         String?      @map("timing_sense")
+  meetingType         MeetingType? @map("meeting_type")
+  nextAction          String?      @map("next_action")
+
+  // 元テキスト・日時
+  minutesRawText      String?      @map("minutes_raw_text")
+  meetingDate         DateTime?    @map("meeting_date")
+
+  // AI出力
+  aiFollowUpAdvice    Json?        @map("ai_follow_up_advice")
+  aiQualityScore      Int?         @map("ai_quality_score")
+  aiQualityLabel      String?      @map("ai_quality_label")
+  aiQualityComment    String?      @map("ai_quality_comment")
+  aiStrengths         Json?        @map("ai_strengths")
+  aiImprovements      Json?        @map("ai_improvements")
+
+  status              String       @default("active")
+  createdAt           DateTime     @default(now()) @map("created_at")
+  updatedAt           DateTime     @updatedAt @map("updated_at")
+
+  salesUser           User         @relation(fields: [salesUserId], references: [id])
+
+  @@index([salesUserId])
+  @@index([createdAt])
+  @@index([meetingDate])
+  @@map("meetings")
 }
 
 model AuditLog {

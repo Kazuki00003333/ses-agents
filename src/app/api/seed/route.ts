@@ -175,6 +175,5 @@ export async function POST() {
   return NextResponse.json({
     message: "Seeded successfully",
     users: [admin.email, manager.email, sales1.email, sales2.email],
-    note: "パスワード: password123",
   });
 }

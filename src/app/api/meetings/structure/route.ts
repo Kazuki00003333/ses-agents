@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { callLLMJson } from "@/lib/llm";
-import { CANDIDATE_STRUCTURING_SYSTEM } from "@/prompts/projectAnalysis";
+import { MEETING_STRUCTURING_SYSTEM } from "@/prompts/meetingAnalysis";
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -18,9 +18,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const structured = await callLLMJson<Record<string, unknown>>(
-      CANDIDATE_STRUCTURING_SYSTEM,
-      `以下の要員情報を構造化してください:\n\n${rawText}`,
-      "candidate_structuring"
+      MEETING_STRUCTURING_SYSTEM,
+      `以下の商談議事録を構造化してください:\n\n${rawText}`,
+      "meeting_structuring"
     );
     return NextResponse.json({ structured });
   } catch (err) {

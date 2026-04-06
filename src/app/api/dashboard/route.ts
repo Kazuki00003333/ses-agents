@@ -17,7 +17,11 @@ export async function GET() {
     projectCount,
     candidateCount,
     evaluationCount,
+    meetingCount,
+    monthlyMeetingCount,
+    meetingQualityAvg,
     recentProjects,
+    recentMeetings,
     recentEvaluations,
     allResults,
     monthlyResults,
@@ -27,11 +31,32 @@ export async function GET() {
     prisma.project.count({ where: { salesUserId: userId } }),
     prisma.candidate.count({ where: { salesUserId: userId } }),
     prisma.evaluation.count({ where: { salesUserId: userId } }),
+    prisma.meeting.count({ where: { salesUserId: userId } }),
+    prisma.meeting.count({ where: { salesUserId: userId, createdAt: { gte: monthStart } } }),
+    prisma.meeting.aggregate({
+      where: { salesUserId: userId, createdAt: { gte: monthStart }, aiQualityScore: { not: null } },
+      _avg: { aiQualityScore: true },
+    }),
     prisma.project.findMany({
       where: { salesUserId: userId },
       orderBy: { createdAt: "desc" },
       take: 5,
       select: { id: true, projectName: true, status: true, createdAt: true },
+    }),
+    prisma.meeting.findMany({
+      where: { salesUserId: userId },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      select: {
+        id: true,
+        companyName: true,
+        contactName: true,
+        meetingType: true,
+        aiQualityScore: true,
+        aiQualityLabel: true,
+        meetingDate: true,
+        createdAt: true,
+      },
     }),
     prisma.evaluation.findMany({
       where: { salesUserId: userId },
@@ -121,6 +146,11 @@ export async function GET() {
     projectCount,
     candidateCount,
     evaluationCount,
+    meetingCount,
+    monthlyMeetingCount,
+    monthlyMeetingQualityAvg: meetingQualityAvg._avg.aiQualityScore
+      ? Math.round(meetingQualityAvg._avg.aiQualityScore)
+      : null,
     documentPassRate: totalProposed > 0 ? Math.round((totalDocPassed / totalProposed) * 100) : 0,
     interviewPassRate: totalDocPassed > 0 ? Math.round((totalIntPassed / totalDocPassed) * 100) : 0,
     closeRate: totalIntPassed > 0 ? Math.round((totalClosed / totalIntPassed) * 100) : 0,
@@ -129,6 +159,7 @@ export async function GET() {
     projectIncompleteFields,
     candidateIncompleteFields,
     recentProjects,
+    recentMeetings,
     recentEvaluations,
     totalStats: { proposed: totalProposed, documentPassed: totalDocPassed, interviewPassed: totalIntPassed, closed: totalClosed, rejected: totalRejected },
     monthlyStats: { proposed: monthProposed, documentPassed: monthDocPassed, interviewPassed: monthIntPassed, closed: monthClosed },
@@ -140,7 +171,7 @@ export async function GET() {
       select: {
         id: true,
         name: true,
-        _count: { select: { projects: true, candidates: true, evaluations: true } },
+        _count: { select: { projects: true, candidates: true, evaluations: true, meetings: true } },
       },
     });
     return NextResponse.json({ ...stats, salesSummary });

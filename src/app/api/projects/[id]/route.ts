@@ -59,6 +59,23 @@ export async function PUT(
   }
 
   const body = await req.json();
-  const updated = await prisma.project.update({ where: { id }, data: body });
+
+  // マスアサインメント対策: 更新可能フィールドのみを許可
+  const allowedFields = [
+    "projectName", "clientCompanyName", "projectSummary",
+    "mustSkills", "niceToHaveSkills", "commercialFlow",
+    "participationPeriod", "unitPrice", "paymentSite",
+    "workingHours", "workLocation", "remoteType",
+    "interviewCount", "settlementRange", "foreignerAllowed",
+    "ageLimit", "otherInfo", "structuredInputJson",
+    "aiSummary", "aiMissingInfo", "aiChecklist", "aiInsights",
+    "riskFlags", "status",
+  ] as const;
+  type AllowedKey = typeof allowedFields[number];
+  const data = Object.fromEntries(
+    allowedFields.filter((k) => k in body).map((k) => [k, body[k as AllowedKey]])
+  );
+
+  const updated = await prisma.project.update({ where: { id }, data });
   return NextResponse.json(updated);
 }
