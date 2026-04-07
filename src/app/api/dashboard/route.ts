@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
+  try {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -31,12 +32,12 @@ export async function GET() {
     prisma.project.count({ where: { salesUserId: userId } }),
     prisma.candidate.count({ where: { salesUserId: userId } }),
     prisma.evaluation.count({ where: { salesUserId: userId } }),
-    prisma.meeting.count({ where: { salesUserId: userId } }),
-    prisma.meeting.count({ where: { salesUserId: userId, createdAt: { gte: monthStart } } }),
+    prisma.meeting.count({ where: { salesUserId: userId } }).catch(() => 0),
+    prisma.meeting.count({ where: { salesUserId: userId, createdAt: { gte: monthStart } } }).catch(() => 0),
     prisma.meeting.aggregate({
       where: { salesUserId: userId, createdAt: { gte: monthStart }, aiQualityScore: { not: null } },
       _avg: { aiQualityScore: true },
-    }),
+    }).catch(() => ({ _avg: { aiQualityScore: null } })),
     prisma.project.findMany({
       where: { salesUserId: userId },
       orderBy: { createdAt: "desc" },
@@ -57,7 +58,7 @@ export async function GET() {
         meetingDate: true,
         createdAt: true,
       },
-    }),
+    }).catch(() => []),
     prisma.evaluation.findMany({
       where: { salesUserId: userId },
       orderBy: { createdAt: "desc" },
@@ -171,11 +172,15 @@ export async function GET() {
       select: {
         id: true,
         name: true,
-        _count: { select: { projects: true, candidates: true, evaluations: true, meetings: true } },
+        _count: { select: { projects: true, candidates: true, evaluations: true } },
       },
     });
     return NextResponse.json({ ...stats, salesSummary });
   }
 
   return NextResponse.json(stats);
+  } catch (err) {
+    console.error("Dashboard error:", err);
+    return NextResponse.json({ error: "データの取得に失敗しました" }, { status: 500 });
+  }
 }

@@ -47,7 +47,7 @@ interface DashboardData {
   }[];
   totalStats: StatCounts;
   monthlyStats: StatCounts;
-  salesSummary?: { id: string; name: string; _count: { projects: number; candidates: number; evaluations: number; meetings: number } }[];
+  salesSummary?: { id: string; name: string; _count: { projects: number; candidates: number; evaluations: number } }[];
 }
 
 // パイプラインファネルバー
@@ -377,7 +377,6 @@ export default function DashboardPage() {
                 <th className="text-right py-3 font-semibold text-gray-500 text-sm" scope="col">案件数</th>
                 <th className="text-right py-3 font-semibold text-gray-500 text-sm" scope="col">候補者数</th>
                 <th className="text-right py-3 font-semibold text-gray-500 text-sm" scope="col">評価件数</th>
-                <th className="text-right py-3 font-semibold text-gray-500 text-sm" scope="col">商談数</th>
               </tr>
             </thead>
             <tbody>
@@ -387,7 +386,6 @@ export default function DashboardPage() {
                   <td className="py-3 text-right text-base text-gray-700">{s._count.projects}</td>
                   <td className="py-3 text-right text-base text-gray-700">{s._count.candidates}</td>
                   <td className="py-3 text-right text-base text-gray-700">{s._count.evaluations}</td>
-                  <td className="py-3 text-right text-base text-gray-700">{s._count.meetings}</td>
                 </tr>
               ))}
             </tbody>
