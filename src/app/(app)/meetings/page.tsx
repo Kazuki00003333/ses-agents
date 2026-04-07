@@ -53,7 +53,7 @@ export default function MeetingsPage() {
         if (Array.isArray(data)) {
           setMeetings(data);
         } else {
-          setError(data?.error ?? "データの取得に失敗しました");
+          setError((data?.detail ?? data?.error) ?? "データの取得に失敗しました");
         }
       })
       .catch(() => setError("データの取得に失敗しました"))
