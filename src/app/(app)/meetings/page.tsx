@@ -44,11 +44,19 @@ const QUALITY_LABELS: Record<string, string> = {
 export default function MeetingsPage() {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     fetch("/api/meetings")
       .then((r) => r.json())
-      .then(setMeetings)
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setMeetings(data);
+        } else {
+          setError(data?.error ?? "データの取得に失敗しました");
+        }
+      })
+      .catch(() => setError("データの取得に失敗しました"))
       .finally(() => setLoading(false));
   }, []);
 
@@ -65,6 +73,10 @@ export default function MeetingsPage() {
       {loading ? (
         <div className="animate-pulse space-y-3">
           {[...Array(5)].map((_, i) => <div key={i} className="h-16 bg-gray-200 rounded-xl" />)}
+        </div>
+      ) : error ? (
+        <div className="bg-white border border-red-200 rounded-xl p-8 text-center">
+          <p className="text-base text-red-500">{error}</p>
         </div>
       ) : meetings.length === 0 ? (
         <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
