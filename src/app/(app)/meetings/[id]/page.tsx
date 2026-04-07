@@ -357,7 +357,7 @@ export default function MeetingDetailPage() {
                 <p className="text-base text-gray-700 mb-5">{advice.summary}</p>
 
                 {/* SES営業レベル */}
-                {advice.sesAdvice && (
+                {advice.sesAdvice && Array.isArray(advice.sesAdvice.questions) && (
                   <div className="mb-5">
                     <div className="flex items-center gap-2 mb-3">
                       <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-blue-100 text-blue-700">SES営業</span>
@@ -376,7 +376,7 @@ export default function MeetingDetailPage() {
                 )}
 
                 {/* SI営業レベル */}
-                {advice.siAdvice && (
+                {advice.siAdvice && Array.isArray(advice.siAdvice.questions) && (
                   <div>
                     <div className="flex items-center gap-2 mb-3">
                       <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-purple-100 text-purple-700">SI営業</span>
@@ -428,7 +428,7 @@ export default function MeetingDetailPage() {
                 {meeting.aiQualityComment && (
                   <p className="text-sm text-gray-600 leading-relaxed mb-4">{meeting.aiQualityComment}</p>
                 )}
-                {meeting.aiStrengths && meeting.aiStrengths.length > 0 && (
+                {Array.isArray(meeting.aiStrengths) && meeting.aiStrengths.length > 0 && (
                   <div className="mb-3">
                     <p className="text-sm font-semibold text-green-700 mb-1.5">良かった点</p>
                     <ul className="space-y-1">
@@ -440,7 +440,7 @@ export default function MeetingDetailPage() {
                     </ul>
                   </div>
                 )}
-                {meeting.aiImprovements && meeting.aiImprovements.length > 0 && (
+                {Array.isArray(meeting.aiImprovements) && meeting.aiImprovements.length > 0 && (
                   <div>
                     <p className="text-sm font-semibold text-amber-700 mb-1.5">改善できる点</p>
                     <ul className="space-y-1">
