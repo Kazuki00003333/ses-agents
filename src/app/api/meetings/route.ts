@@ -7,31 +7,36 @@ import { MEETING_QUALITY_EVALUATION_SYSTEM } from "@/prompts/meetingAnalysis";
 import { z } from "zod";
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const userId = session.user.id;
-  const isManager = session.user.role !== "sales";
+    const userId = session.user.id;
+    const isManager = session.user.role !== "sales";
 
-  const meetings = await prisma.meeting.findMany({
-    where: isManager ? {} : { salesUserId: userId },
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      companyName: true,
-      contactName: true,
-      meetingType: true,
-      meetingPurpose: true,
-      meetingDate: true,
-      aiQualityScore: true,
-      aiQualityLabel: true,
-      status: true,
-      createdAt: true,
-      salesUser: { select: { id: true, name: true } },
-    },
-  });
+    const meetings = await prisma.meeting.findMany({
+      where: isManager ? {} : { salesUserId: userId },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        companyName: true,
+        contactName: true,
+        meetingType: true,
+        meetingPurpose: true,
+        meetingDate: true,
+        aiQualityScore: true,
+        aiQualityLabel: true,
+        status: true,
+        createdAt: true,
+        salesUser: { select: { id: true, name: true } },
+      },
+    });
 
-  return NextResponse.json(meetings);
+    return NextResponse.json(meetings);
+  } catch (err) {
+    console.error("Meetings GET error:", err);
+    return NextResponse.json({ error: "データの取得に失敗しました" }, { status: 500 });
+  }
 }
 
 const createMeetingSchema = z.object({
@@ -51,6 +56,7 @@ const createMeetingSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  try {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -119,4 +125,8 @@ export async function POST(req: NextRequest) {
   });
 
   return NextResponse.json(meeting, { status: 201 });
+  } catch (err) {
+    console.error("Meetings POST error:", err);
+    return NextResponse.json({ error: "商談の登録に失敗しました" }, { status: 500 });
+  }
 }

@@ -36,16 +36,22 @@ export async function POST(
     .filter(Boolean)
     .join("\n");
 
-  const advice = await callLLMJson<{
-    priority: string;
-    summary: string;
-    questions: { topic: string; question: string; reason: string }[];
-  }>(
-    MEETING_ADVICE_SYSTEM,
-    `以下の商談情報を元にフォローアップアドバイスをしてください:\n\n${meetingText}`,
-    "meeting_advice",
-    id
-  );
+  let advice;
+  try {
+    advice = await callLLMJson<{
+      priority: string;
+      summary: string;
+      questions: { topic: string; question: string; reason: string }[];
+    }>(
+      MEETING_ADVICE_SYSTEM,
+      `以下の商談情報を元にフォローアップアドバイスをしてください:\n\n${meetingText}`,
+      "meeting_advice",
+      id
+    );
+  } catch (err) {
+    console.error("Meeting advice LLM error:", err);
+    return NextResponse.json({ error: "AI分析に失敗しました" }, { status: 500 });
+  }
 
   await prisma.meeting.update({
     where: { id },

@@ -35,18 +35,24 @@ export async function POST(
     .filter(Boolean)
     .join("\n");
 
-  const result = await callLLMJson<{
-    qualityScore: number;
-    qualityLabel: string;
-    qualityComment: string;
-    strengths: string[];
-    improvements: string[];
-  }>(
-    MEETING_QUALITY_EVALUATION_SYSTEM,
-    `以下の商談記録を評価してください:\n\n${meetingText}`,
-    "meeting_quality_evaluation",
-    id
-  );
+  let result;
+  try {
+    result = await callLLMJson<{
+      qualityScore: number;
+      qualityLabel: string;
+      qualityComment: string;
+      strengths: string[];
+      improvements: string[];
+    }>(
+      MEETING_QUALITY_EVALUATION_SYSTEM,
+      `以下の商談記録を評価してください:\n\n${meetingText}`,
+      "meeting_quality_evaluation",
+      id
+    );
+  } catch (err) {
+    console.error("Meeting evaluate LLM error:", err);
+    return NextResponse.json({ error: "AI評価に失敗しました" }, { status: 500 });
+  }
 
   const updated = await prisma.meeting.update({
     where: { id },
