@@ -36,12 +36,15 @@ export async function POST(
     .filter(Boolean)
     .join("\n");
 
+  type AdviceQuestion = { topic: string; question: string; reason: string };
+  type AdviceLevel = { label: string; questions: AdviceQuestion[] };
   let advice;
   try {
     advice = await callLLMJson<{
       priority: string;
       summary: string;
-      questions: { topic: string; question: string; reason: string }[];
+      sesAdvice: AdviceLevel;
+      siAdvice: AdviceLevel;
     }>(
       MEETING_ADVICE_SYSTEM,
       `以下の商談情報を元にフォローアップアドバイスをしてください:\n\n${meetingText}`,

@@ -23,7 +23,8 @@ interface Meeting {
   aiFollowUpAdvice: {
     priority: string;
     summary: string;
-    questions: { topic: string; question: string; reason: string }[];
+    sesAdvice: { label: string; questions: { topic: string; question: string; reason: string }[] };
+    siAdvice: { label: string; questions: { topic: string; question: string; reason: string }[] };
   } | null;
   aiQualityScore: number | null;
   aiQualityLabel: string | null;
@@ -353,20 +354,49 @@ export default function MeetingDetailPage() {
                 }`}>
                   {advice.priority === "high" ? "優先度：高" : advice.priority === "medium" ? "優先度：中" : "優先度：低"}
                 </div>
-                <p className="text-base text-gray-700 mb-4">{advice.summary}</p>
-                <div className="space-y-3">
-                  {advice.questions.map((q, i) => (
-                    <div key={i} className="bg-blue-50 rounded-lg p-4">
-                      <p className="text-sm font-semibold text-blue-800 mb-1">💬 {q.topic}</p>
-                      <p className="text-base text-blue-900 mb-1.5">{q.question}</p>
-                      <p className="text-sm text-blue-600">{q.reason}</p>
+                <p className="text-base text-gray-700 mb-5">{advice.summary}</p>
+
+                {/* SES営業レベル */}
+                {advice.sesAdvice && (
+                  <div className="mb-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-blue-100 text-blue-700">SES営業</span>
+                      <span className="text-sm font-semibold text-gray-700">{advice.sesAdvice.label}</span>
                     </div>
-                  ))}
-                </div>
+                    <div className="space-y-2.5">
+                      {advice.sesAdvice.questions.map((q, i) => (
+                        <div key={i} className="bg-blue-50 rounded-lg p-4">
+                          <p className="text-sm font-semibold text-blue-800 mb-1">💬 {q.topic}</p>
+                          <p className="text-base text-blue-900 mb-1.5">{q.question}</p>
+                          <p className="text-sm text-blue-600">{q.reason}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* SI営業レベル */}
+                {advice.siAdvice && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-purple-100 text-purple-700">SI営業</span>
+                      <span className="text-sm font-semibold text-gray-700">{advice.siAdvice.label}</span>
+                    </div>
+                    <div className="space-y-2.5">
+                      {advice.siAdvice.questions.map((q, i) => (
+                        <div key={i} className="bg-purple-50 rounded-lg p-4">
+                          <p className="text-sm font-semibold text-purple-800 mb-1">🎯 {q.topic}</p>
+                          <p className="text-base text-purple-900 mb-1.5">{q.question}</p>
+                          <p className="text-sm text-purple-600">{q.reason}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <p className="text-base text-gray-400">
-                ボタンを押すと、次回の商談で確認すべきことをAIがアドバイスします。
+                ボタンを押すと、SES営業・SI営業の2段階でアドバイスします。
               </p>
             )}
           </div>
