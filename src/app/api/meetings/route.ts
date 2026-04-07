@@ -127,6 +127,6 @@ export async function POST(req: NextRequest) {
   return NextResponse.json(meeting, { status: 201 });
   } catch (err) {
     console.error("Meetings POST error:", err);
-    return NextResponse.json({ error: "商談の登録に失敗しました" }, { status: 500 });
+    return NextResponse.json({ error: "商談の登録に失敗しました", detail: err instanceof Error ? err.message : String(err) }, { status: 500 });
   }
 }
