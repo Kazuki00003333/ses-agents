@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
@@ -75,6 +76,7 @@ const QUALITY_LABELS: Record<string, string> = {
 };
 
 export default function MeetingDetailPage() {
+  const router = useRouter();
   const { id } = useParams<{ id: string }>();
   const searchParams = useSearchParams();
   const isNew = searchParams.get("new") === "1";
@@ -87,6 +89,7 @@ export default function MeetingDetailPage() {
   const [advising, setAdvising] = useState(false);
   const [adviseError, setAdviseError] = useState("");
   const [evaluating, setEvaluating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   async function loadMeeting() {
     const res = await fetch(`/api/meetings/${id}`);
@@ -139,6 +142,18 @@ export default function MeetingDetailPage() {
       setAdviseError("アドバイスの取得に失敗しました");
     } finally {
       setAdvising(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!confirm("この商談を削除しますか？この操作は取り消せません。")) return;
+    setDeleting(true);
+    const res = await fetch(`/api/meetings/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      router.push("/meetings");
+    } else {
+      alert("削除に失敗しました");
+      setDeleting(false);
     }
   }
 
@@ -202,9 +217,14 @@ export default function MeetingDetailPage() {
               </button>
             </>
           ) : (
-            <button onClick={() => setEditing(true)} className="text-base px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">
-              編集
-            </button>
+            <>
+              <button onClick={() => setEditing(true)} className="text-base px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">
+                編集
+              </button>
+              <button onClick={handleDelete} disabled={deleting} className="text-base px-4 py-2 border border-red-200 rounded-lg text-red-500 hover:bg-red-50 disabled:opacity-50">
+                {deleting ? "削除中..." : "削除"}
+              </button>
+            </>
           )}
         </div>
       </div>
